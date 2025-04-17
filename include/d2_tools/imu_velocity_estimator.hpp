@@ -291,17 +291,6 @@ private:
 
     void IMURigidBodyTransform(const std::vector<IMUdata> &imu_data, const std::vector<Eigen::Vector3d> &transforms,
         const std::vector<Eigen::Matrix3d> &rotations, const std::vector<double> &weights) {
-        for (size_t i = 0; i < imu_data.size(); i++) {
-            if (imu_data[i].is_valid) {
-                Eigen::Vector3d transformed_acc = rotations[i] * imu_data[i].acc + transforms[i];
-                Eigen::Vector3d transformed_gyro = rotations[i] * imu_data[i].gyro;
-                imu_data_[i].acc = transformed_acc;
-                imu_data_[i].gyro = transformed_gyro;
-                imu_data_[i].is_valid = true;
-            } else {
-                imu_data_[i].is_valid = false;
-            }
-        }
     }
 
     void imuCallback(const sensor_msgs::msg::Imu::ConstSharedPtr &msg);
