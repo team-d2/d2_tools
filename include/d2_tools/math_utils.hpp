@@ -33,7 +33,7 @@ Eigen::Matrix3d expSO3(const Eigen::Vector3d &omega) {
     } else {
         Eigen::Matrix3d K = W / theta;
         Eigen::Matrix3d K2 = K * K;
-        return Eigen::Matrix3d::Identity() + K * std::sin(theta) + K2 * (1 - std::cos(theta)); // (I + [ω]× + [ω]×^2)
+        return Eigen::Matrix3d::Identity() + K * std::sin(theta) + K2 * (1 - std::cos(theta));
     }
 }
 
