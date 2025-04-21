@@ -10,13 +10,10 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 
-namespace d2_tools {
+#include "d2_tools/math.hpp"
+#include "d2_tools/types.hpp"
 
-struct IMUdata {
-    double timestamp;
-    Eigen::Vector3d acc, gyro;
-    bool is_valid;
-};
+namespace d2_tools {
 
 class IMUVelocityEstimator {
 public:
@@ -27,11 +24,11 @@ public:
         P_ = Eigen::MatrixXd::Identity(STATE_SIZE, STATE_SIZE); // 初期状態共分散
 
         Q_ = Eigen::MatrixXd::Identity(STATE_SIZE, STATE_SIZE) * 1e-2; // プロセスノイズ共分散
-        Q_.block<3, 3>(0, 0) *= 1e-2; // 位置のプロセスノイズ
-        Q_.block<3, 3>(3, 3) *= 0.1; // 速度のプロセスノイズ
-        Q_.block<4, 4>(6, 6) *= 1e-2; // クォータニオンのプロセスノイズ
-        Q_.block<3, 3>(10, 10) *= 1e-3; // 加速度バイアスのプロセスノイズ
-        Q_.block<3, 3>(13, 13) *= 1e-3; // ジャイロバイアスのプロセスノイズ
+        Q_.block<3, 3>(0, 0) *= 1e-2; // pos
+        Q_.block<3, 3>(3, 3) *= 0.1; // vel
+        Q_.block<4, 4>(6, 6) *= 1e-2; // quaternion
+        Q_.block<3, 3>(10, 10) *= 1e-3; // accel_bias
+        Q_.block<3, 3>(13, 13) *= 1e-3; // gyro_bias
 
         R_= Eigen::MatrixXd::Identity(3, 3) * 0.1; // 観測ノイズ共分散
 
@@ -50,9 +47,9 @@ public:
         }
     }
 
-    void predict(const std::vector<IMUdata> &imu_data) {
+    void predict(const std::vector<d2_tools::types::IMUdata> &imu_data) {
         auto validated_data = validateIMUData(imu_data);
-        IMUdata fused_data = fuseIMUData(validated_data);
+        d2_tools::types::IMUdata fused_data = fuseIMUData(validated_data);
         if (!fused_data.is_valid) {
             std::cerr << "Invalid IMU data" << std::endl;
             return;
@@ -83,7 +80,7 @@ public:
         // 予測
         pos += vel * dt + 0.5 * (R * acc + gravity) * dt * dt; // 位置
         vel += (R * acc + gravity) * dt; // 速度
-        q += quaternionDerivative(q, gyro) * dt; // クォータニオン
+        q += quaternionDerivative(q, gyro) * dt; // quaternion
         q.normalize();
         acc_bias += Eigen::Vector3d::Zero(); // 変化しないと仮定
         gyro_bias += Eigen::Vector3d::Zero(); // 変化しないと仮定
@@ -97,16 +94,9 @@ public:
 
         // ヤコビアン行列計算
         Eigen::MatrixXd F = Eigen::MatrixXd::Identity(STATE_SIZE, STATE_SIZE);
-        F.block<3, 3>(0, 3) = Eigen::Matrix3d::Identity() * dt; // 位置のヤコビアン
-        F.block<3, 3>(0, 6) = -0.5 * dt * quaternion2RotationMatrix(q) * Eigen::Matrix3d::Identity(); // クォータニオンのヤコビアン
-        F.block<3, 3>(3, 6) = Eigen::Matrix3d::Identity() * dt; // 速度のヤコビアン
-        F.block<3, 3>(6, 10) = -0.5 * dt * quaternion2RotationMatrix(q) * Eigen::Matrix3d::Identity(); // 加速度バイアスのヤコビアン
-        F.block<3, 3>(6, 13) = -0.5 * dt * quaternion2RotationMatrix(q) * Eigen::Matrix3d::Identity(); // ジャイロバイアスのヤコビアン
-        F.block<3, 3>(10, 10) = Eigen::Matrix3d::Identity(); // 加速度バイアスのヤコビアン
-        F.block<3, 3>(13, 13) = Eigen::Matrix3d::Identity(); // ジャイロバイアスのヤコビアン
         
-        // 信念分布更新
-        P_ = F * P_ * F.transpose() + Q_ * dt;
+
+
 
         last_time_ = fused_data.timestamp; // 更新時刻
     }
@@ -138,11 +128,11 @@ public:
     }
 
     // 静止状態検出
-    bool isStationary(const std::vector<IMUdata> &imu_data, double threshold = 0.1, int window_size = 10) {
+    bool isStationary(const std::vector<d2_tools::types::IMUdata> &imu_data, double threshold = 0.1, int window_size = 10) {
         static std::vector<Eigen::Vector3d> acc_buffer;
 
         auto validated_data = validateIMUData(imu_data);
-        IMUdata fused_data = fuseIMUData(validated_data);
+        d2_tools::types::IMUdata fused_data = fuseIMUData(validated_data);
         if (!fused_data.is_valid) {
             std::cerr << "Invalid IMU data" << std::endl;
             return false;
@@ -211,8 +201,8 @@ private:
     }
 
     // 複数IMUdataをセンサ融合
-    IMUdata fuseIMUData(const std::vector<IMUdata> &imu_data) {
-        IMUdata fused_data;
+    d2_tools::types::IMUdata fuseIMUData(const std::vector<d2_tools::types::IMUdata> &imu_data) {
+        d2_tools::types::IMUdata fused_data;
         fused_data.timestamp = imu_data[0].timestamp;
         fused_data.acc.setZero();
         fused_data.gyro.setZero();
@@ -240,8 +230,8 @@ private:
     }
 
     // 異常値検出
-    std::vector<IMUdata> validateIMUData(const std::vector<IMUdata> &imu_data) {
-        std::vector<IMUdata> validated_data = imu_data;
+    std::vector<d2_tools::types::IMUdata> validateIMUData(const std::vector<d2_tools::types::IMUdata> &imu_data) {
+        std::vector<d2_tools::types::IMUdata> validated_data = imu_data;
 
         // 閾値設定
         const double ACCEL_THRESHOLD = 30.0; // m/s^2 (例: 3G)
@@ -280,8 +270,8 @@ public:
     IMUVelocityEstimatorComponent(const std::string &node_name, const rclcpp::NodeOptions &options);
 
 private:
-    IMUdata rosToIMUData(const sensor_msgs::msg::Imu::ConstPtr &msg) {
-        IMUdata data;
+    d2_tools::types::IMUdata rosToIMUData(const sensor_msgs::msg::Imu::ConstPtr &msg) {
+        d2_tools::types::IMUdata data;
         data.timestamp = msg->header.stamp.sec + msg->header.stamp.nanosec * 1e-9;
         data.acc = Eigen::Vector3d(msg->linear_acceleration.x, msg->linear_acceleration.y, msg->linear_acceleration.z);
         data.gyro = Eigen::Vector3d(msg->angular_velocity.x, msg->angular_velocity.y, msg->angular_velocity.z);
@@ -289,7 +279,7 @@ private:
         return data;
     }
 
-    void IMURigidBodyTransform(const std::vector<IMUdata> &imu_data, const std::vector<Eigen::Vector3d> &transforms,
+    void IMURigidBodyTransform(const std::vector<d2_tools::types::IMUdata> &imu_data, const std::vector<Eigen::Vector3d> &transforms,
         const std::vector<Eigen::Matrix3d> &rotations, const std::vector<double> &weights) {
     }
 
@@ -298,7 +288,7 @@ private:
     // variables & constants ---------------------------------------------------------------------------------------
     IMUVelocityEstimator estimator_;
     std::vector<rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr> imu_subs_;
-    std::vector<IMUdata> imu_data_;
+    std::vector<d2_tools::types::IMUdata> imu_data_;
     std::vector<std::string> imu_topics_;
     std::vector<Eigen::Vector3d> imu_transforms_;
     std::vector<Eigen::Matrix3d> imu_rotations_;
