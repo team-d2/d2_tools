@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="use_sim_time" default="true"/>
+
+  <set_parameter name="use_sim_time" value="$(var use_sim_time)"/>
+  <group>
+    <node_container pkg="rclcpp_components" exec="component_container_mt" name="kinematic_container" namespace="" output="screen">
+      <composable_node pkg="d2_tools" plugin="d2_tools::IMUTransformComponent" name="imu_transform_component" namespace="">
+        <param name="input" value="/livox/imu_192_168_1_101"/>
+        <param name="output" value="/livox/imu"/>
+        <param name="output_frame" value="base_link"/>
+        <param name="transform" value="[0.0, 0.0, -0.505, 0.0, 0.0, 0.0]"/> <!-- imu to base_link -->
+        <extra_arg name="use_intra_process_comms" value="false" />
+      </composable_node>
+    </node_container>
+  </group>
+</launch>
