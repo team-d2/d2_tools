@@ -11,7 +11,7 @@ namespace d2_tools {
 
 class IMUTransformComponent : public rclcpp::Node {
 public:
-    explicit IMUTransformComponent(const rclcpp::NodeOptions &options)
+    IMUTransformComponent(const rclcpp::NodeOptions &options)
         : Node("imu_transform_component", options) {
             this->declare_parameter("input", "imu_input");
                 input_ = this->get_parameter("input").as_string();
@@ -44,6 +44,7 @@ public:
             imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(output_, rclcpp::SensorDataQoS());
 
         }
+    IMUTransformComponent(const rclcpp::NodeOptions& options, const std::string & node_name);
 
 private:
     void imuCallback(const sensor_msgs::msg::Imu::ConstSharedPtr &imu_raw) {
@@ -94,3 +95,5 @@ private:
 
 } // namespace d2_tools
 
+#include "rclcpp_components/register_node_macro.hpp"
+RCLCPP_COMPONENTS_REGISTER_NODE(d2_tools::IMUTransformComponent)
