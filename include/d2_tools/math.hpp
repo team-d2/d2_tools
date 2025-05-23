@@ -13,6 +13,8 @@ namespace d2_tools {
 namespace math {
 
 const double epsilon = 1e-10;
+Eigen::Matrix3d expSO3(const Eigen::Vector3d &omega);
+
 
 // helpers --------------------------------------------------------------------------------------
 
@@ -54,25 +56,26 @@ Eigen::Matrix4d makeT(const Eigen::MatrixXd &R, const Eigen::VectorXd &t) {
     T.block<3, 1>(0, 3) = t;
     return T;
 }
+
 // 剛体変換行列 T から 回転行列 R と 並進ベクトル t を生成
 std::pair<Eigen::Matrix3d, Eigen::Vector3d> makeRt(const Eigen::Matrix4d &T) {
     return {T.block<3, 3>(0, 0), T.block<3, 1>(0, 3)};
 }
 
 
-Eigen::Matrix2d skewSO2(const double &theta) {
-    Eigen::Matrix2d skew_matrix;
-    skew_matrix << 0, -theta,
-                   theta, 0;
-    return skew_matrix;
-}
+// Eigen::Matrix2d skewSO2(const double &theta) {
+//     Eigen::Matrix2d skew_matrix;
+//     skew_matrix << 0, -theta,
+//                    theta, 0;
+//     return skew_matrix;
+// }
 
-Eigen::Matrix2d unSkewSO2(const Eigen::Matrix2d &skew_matrix) {
-    Eigen::Vector2d v;
-    v(0) = skew_matrix(1, 0);
-    v(1) = skew_matrix(0, 1);
-    return v;
-}
+// Eigen::Matrix2d unSkewSO2(const Eigen::Matrix2d &skew_matrix) {
+//     Eigen::Vector2d v;
+//     v(0) = skew_matrix(1, 0);
+//     v(1) = skew_matrix(0, 1);
+//     return v;
+// }
 
 // ベクトルからskew対称行列を生成 (I+[ω]× のω)
 Eigen::Matrix3d skewSO3(const Eigen::Vector3d &v) {
@@ -92,33 +95,32 @@ Eigen::Vector3d unSkewSO3(const Eigen::Matrix3d &skew_matrix) {
     return v;
 }
 
-Eigen::Matrix2d leftJacobianSO2(const double &phi) {
-    if (std::abs(phi) < epsilon) return Eigen::Matrix2d::Identity() + 0.5 * skewSO2(phi);
-    auto s = std::sin(phi);
-    auto c = std::cos(phi);
-    return (s / phi) * Eigen::Matrix2d::Identity() + ((1 - c) / phi) * skewSO2(1.0);
-}
+// Eigen::Matrix2d leftJacobianSO2(const double &phi) {
+//     if (std::abs(phi) < epsilon) return Eigen::Matrix2d::Identity() + 0.5 * skewSO2(phi);
+//     auto s = std::sin(phi);
+//     auto c = std::cos(phi);
+//     return (s / phi) * Eigen::Matrix2d::Identity() + ((1 - c) / phi) * skewSO2(1.0);
+// }
 
-Eigen::Matrix2d invLeftJacobianSO2(const double &phi) {
-    if (std::abs(phi) < epsilon) return Eigen::Matrix2d::Identity() - 0.5 * skewSO2(phi);
-    auto half_angle = 0.5 * phi;
-    auto cot_half_angle = 1.0 / std::tan(half_angle);
-    return half_angle * cot_half_angle * Eigen::Matrix2d::Identity() - half_angle * skewSO2(1.0);
-}
+// Eigen::Matrix2d invLeftJacobianSO2(const double &phi) {
+//     if (std::abs(phi) < epsilon) return Eigen::Matrix2d::Identity() - 0.5 * skewSO2(phi);
+//     auto half_angle = 0.5 * phi;
+//     auto cot_half_angle = 1.0 / std::tan(half_angle);
+//     return half_angle * cot_half_angle * Eigen::Matrix2d::Identity() - half_angle * skewSO2(1.0);
+// }
 
 
 
 // ----------------------------------------------------------------------------------------------
 
-Eigen::Matrix2d expSO2(const double &theta) {
-    return Eigen::Matrix2d(cos(theta), -sin(theta), sin(theta), cos(theta));
-}
+// Eigen::Matrix2d expSO2(const double &theta) {
+//     return Eigen::Matrix2d(cos(theta), -sin(theta), sin(theta), cos(theta));
+// }
 
-Eigen::Matrix2d logSO2(const Eigen::Matrix2d &R) {
-    double theta = std::atan2(R(1, 0), R(0, 0));
-    return Eigen::Matrix2d(theta);
-}
-
+// Eigen::Matrix2d logSO2(const Eigen::Matrix2d &R) {
+//     double theta = std::atan2(R(1, 0), R(0, 0));
+//     return Eigen::Matrix2d(theta);
+// }
 
 // SO(3)の指数写像
 Eigen::Matrix3d expSO3(const Eigen::Vector3d &omega) {
@@ -137,14 +139,14 @@ Eigen::Matrix3d expSO3(const Eigen::Vector3d &omega) {
 }
 
 // transformation (section 2.)
-Eigen::Matrix3d expSE3(const Eigen::VectorXd &xi) {
-    if (xi.size() != 6) throw std::invalid_argument("xi must be a 6D vector");
-    Eigen::Matrix3d omega = xi.head<3>();
-    Eigen::Matrix3d v = xi.tail<3>();
-    Eigen::Matrix3d R = expSO3(omega);
-    double theta2 = omega.dot(omega);   // 角速度normの2乗 (r?)
-    if (theta2 < epsilon) return makeT(R, v);
-}
+// Eigen::Matrix3d expSE3(const Eigen::VectorXd &xi) {
+//     if (xi.size() != 6) throw std::invalid_argument("xi must be a 6D vector");
+//     Eigen::Matrix3d omega = xi.head<3>();
+//     Eigen::Matrix3d v = xi.tail<3>();
+//     Eigen::Matrix3d R = expSO3(omega);
+//     double theta2 = omega.dot(omega);   // 角速度normの2乗 (r?)
+//     if (theta2 < epsilon) return makeT(R, v);
+// }
 
 } // namespace math
 } // namespace d2_tools
