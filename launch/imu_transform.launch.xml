@@ -9,6 +9,7 @@
         <param name="input" value="/livox/imu_192_168_1_101"/>
         <param name="output" value="/livox/imu"/>
         <param name="output_frame" value="base_link"/>
+        <param name="is_livox_imu" value="true"/>
         <param name="transform" value="[0.0, 0.0, -0.505, 0.0, 0.0, 0.0]"/> <!-- imu to base_link -->
         <extra_arg name="use_intra_process_comms" value="false" />
       </composable_node>
