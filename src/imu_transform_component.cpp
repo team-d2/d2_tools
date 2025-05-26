@@ -43,7 +43,7 @@ public:
                 rclcpp::SensorDataQoS(),
                 std::bind(&IMUTransformComponent::imuCallback, this, std::placeholders::_1)
             );
-            imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(output_, rclcpp::SensorDataQoS());
+            imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(output_, rclcpp::QoS(10));
 
             prev_sensor_data_time_ = 0.0;
             prev_imu_gyro_ = Eigen::Vector3d(0.0, 0.0, 0.0);
@@ -72,15 +72,20 @@ private:
         
         Eigen::Vector3d domg = Eigen::Vector3d::Zero();
         
-        if (prev_sensor_data_time_ != 0.0 && prev_imu_gyro_.norm() != 0.0) {
+        if (prev_sensor_data_time_ != 0.0) {
             double dt = sensor_now - prev_sensor_data_time_;
-            if (dt <= 0.0 || dt > 0.1) {
-                RCLCPP_WARN(this->get_logger(), "Invalid IMU data time difference: %f", dt);
-                prev_sensor_data_time_ = sensor_now;
-                prev_imu_gyro_ = imu_data.gyro;
-                return;
+            // dtのチェックを修正
+            if (dt <= 1e-4 || dt > 0.1) {
+                RCLCPP_WARN(this->get_logger(), "Invalid or too small IMU data time difference: %f", dt);
+                domg = Eigen::Vector3d::Zero();
+                if (dt <= 0.0) {
+                    prev_sensor_data_time_ = sensor_now;
+                    prev_imu_gyro_ = imu_data.gyro;
+                    return;
+                }
+            } else {
+                domg = (imu_data.gyro - prev_imu_gyro_) / dt;
             }
-            domg = (imu_data.gyro - prev_imu_gyro_) / dt;
         }
         
         prev_sensor_data_time_ = sensor_now;
