@@ -31,7 +31,7 @@ public:
         transformed_data.gyro = R_ * (imu_data_.gyro);
         Eigen::Matrix3d skew1 = d2_tools::math::skewSO3(transformed_data.gyro);
         Eigen::Matrix3d skew2 = d2_tools::math::skewSO3(t_);
-        transformed_data.acc = R_ * imu_data_.acc - skew1 * skew1 * t_ - skew2 * R_ * domg;
+        transformed_data.acc = R_ * imu_data_.acc - skew1 * skew1 * t_ + skew2 * R_ * domg;
         transformed_data.is_valid = imu_data_.is_valid;
         return transformed_data;
     }
