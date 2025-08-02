@@ -95,8 +95,6 @@ public:
         init_guess = imu_guess = matrix();
 
         pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
-        std::cout << "initial guess: " << init_guess.transpose() << std::endl;
-        std::cout << "input cloud: " << cloud->size() << " points" << std::endl;
         reg_->setInputSource(cloud);
         reg_->align(*aligned, init_guess.cast<float>());
 

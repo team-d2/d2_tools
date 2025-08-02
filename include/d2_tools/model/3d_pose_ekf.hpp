@@ -73,8 +73,8 @@ public:
         VectorXt next_state(state.size());
 
         const Vector3t pt = state.middleRows(0, 3);
-        const Quaterniont qt(state(3), state(4), state(5), state(6));
-        const Vector3t vt = state.middleRows(7, 3);
+        const Vector3t vt = state.middleRows(3, 3);
+        const Quaterniont qt(state(6), state(7), state(8), state(9)); 
         const MatrixXt R = qt.toRotationMatrix();
         const Vector3t bias_acc = state.middleRows(10, 3);
         const Vector3t bias_gyro = state.middleRows(13, 3);
@@ -88,9 +88,13 @@ public:
 
         // Update position and velocity based on control input
         next_state.head(3) = pt + vt * dt + 0.5 * acc_global * dt * dt;
-        next_state.segment(7, 3) = vt + acc_global * dt;
-        next_state.segment(3, 4) = Quaterniont(qt * Sophus::SO3<EigenT>::exp(gyro * dt).matrix()).coeffs();
-        next_state.segment(3, 4).normalize(); // Ensure quaternion is normalized
+        next_state.segment(3, 3) = vt + acc_global * dt;
+        Quaterniont next_q(qt * Sophus::SO3<EigenT>::exp(gyro * dt).matrix());
+        next_q.normalize();
+        next_state(6) = next_q.w();
+        next_state(7) = next_q.x();
+        next_state(8) = next_q.y();
+        next_state(9) = next_q.z();
         next_state.segment(10, 3) = bias_acc;
         next_state.segment(13, 3) = bias_gyro;
         next_state.segment(16, 3) = gravity;
