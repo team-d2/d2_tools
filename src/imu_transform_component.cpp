@@ -74,7 +74,6 @@ private:
         
         if (prev_sensor_data_time_ != 0.0) {
             double dt = sensor_now - prev_sensor_data_time_;
-            // dtのチェックを修正
             if (dt <= 1e-4 || dt > 0.1) {
                 RCLCPP_WARN(this->get_logger(), "Invalid or too small IMU data time difference: %f", dt);
                 domg = Eigen::Vector3d::Zero();

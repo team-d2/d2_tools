@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<launch>
+  <let name="project_name" value="d2_tools"/>
+  <let name="project_namespace" value="d2::tools::ros2"/>
+  <let name="project_share" value="$(find-pkg-share $(var project_name))"/>
+
+  <!-- global args -->
+  <arg name="namespace" default=""/>
+  <arg name="container_name" default="localization_container"/>
+  <arg name="container_thread_num" default="2"/>
+  <arg name="use_sim_time" default="false"/>
+
+  <!-- LocalizerNode specific args -->
+  <arg name="globalmap_pcd_path" default="$(var project_share)/maps/GlobalMap.pcd"/>
+  <arg name="robot_odom_frame_id" default="odom"/>
+  <arg name="odom_child_frame_id" default="base_link"/>
+  <arg name="invert_acc" default="false"/>
+  <arg name="invert_gyro" default="false"/>
+  <arg name="downsample_leaf_size" default="0.2"/>
+  <arg name="ndt_neighbor_search_radius" default="2.0"/>
+  <arg name="ndt_resolution" default="1.0"/>
+  <arg name="num_threads" default="8"/>
+  <arg name="cool_time_duration" default="0.5"/>
+  
+  <!-- EKF noise parameters -->
+  <arg name="pos_noise_scale" default="0.01"/>
+  <arg name="vel_noise_scale" default="0.01"/>
+  <arg name="quat_noise_scale" default="0.01"/>
+  <arg name="vel_bias_noise_scale" default="0.001"/>
+  <arg name="gyro_bias_noise_scale" default="0.001"/>
+  <arg name="gravity_noise_scale" default="0.001"/>
+  
+  <!-- Initial pose settings -->
+  <arg name="specify_init_pose" default="false"/>
+  <arg name="init_pose" default="[0.0, 0.0, 0.0]"/>
+  <arg name="init_quat" default="[0.0, 0.0, 0.0, 1.0]"/>
+  
+  <arg name="use_intra_process_comms" default="false"/>
+
+  <!-- remap args -->
+  <arg name="imu_topic" default="imu/data"/>
+  <arg name="pointcloud_topic" default="points_raw"/>
+  <arg name="initialpose_topic" default="initialpose"/>
+  <arg name="aligned_points_topic" default="aligned_points"/>
+  <arg name="odom_topic" default="odom"/>
+
+  <set_parameter name="use_sim_time" value="$(var use_sim_time)"/>
+
+  <group>
+    <node_container
+      pkg="rclcpp_components"
+      exec="component_container_mt"
+      namespace="$(var namespace)"
+      name="$(var container_name)"
+      output="screen">
+      <param name="thread_num" value="$(var container_thread_num)"/>
+    </node_container>
+
+    <!-- LocalizerNode -->
+    <load_composable_node
+      target="$(var namespace)/$(var container_name)">
+      <composable_node
+          pkg="$(var project_name)"
+          plugin="$(var project_namespace)::LocalizerNode"
+          name="localizer_node">
+        <!-- Global map -->
+        <param name="globalmap_pcd_path" value="$(var globalmap_pcd_path)"/>
+        
+        <!-- Frame settings -->
+        <param name="robot_odom_frame_id" value="$(var robot_odom_frame_id)"/>
+        <param name="odom_child_frame_id" value="$(var odom_child_frame_id)"/>
+        
+        <!-- IMU settings -->
+        <param name="invert_acc" value="$(var invert_acc)"/>
+        <param name="invert_gyro" value="$(var invert_gyro)"/>
+        
+        <!-- Point cloud processing -->
+        <param name="downsample_leaf_size" value="$(var downsample_leaf_size)"/>
+        
+        <!-- NDT registration settings -->
+        <param name="ndt_neighbor_search_radius" value="$(var ndt_neighbor_search_radius)"/>
+        <param name="ndt_resolution" value="$(var ndt_resolution)"/>
+        <param name="num_threads" value="$(var num_threads)"/>
+        
+        <!-- Filter settings -->
+        <param name="cool_time_duration" value="$(var cool_time_duration)"/>
+        
+        <!-- EKF noise parameters -->
+        <param name="pos_noise_scale" value="$(var pos_noise_scale)"/>
+        <param name="vel_noise_scale" value="$(var vel_noise_scale)"/>
+        <param name="quat_noise_scale" value="$(var quat_noise_scale)"/>
+        <param name="vel_bias_noise_scale" value="$(var vel_bias_noise_scale)"/>
+        <param name="gyro_bias_noise_scale" value="$(var gyro_bias_noise_scale)"/>
+        <param name="gravity_noise_scale" value="$(var gravity_noise_scale)"/>
+        
+        <!-- Initial pose settings -->
+        <param name="specify_init_pose" value="$(var specify_init_pose)"/>
+        <param name="init_pose" value="$(var init_pose)"/>
+        <param name="init_quat" value="$(var init_quat)"/>
+        
+        <!-- Topic remapping -->
+        <remap from="imu/data" to="$(var imu_topic)"/>
+        <remap from="points_raw" to="$(var pointcloud_topic)"/>
+        <remap from="initialpose" to="$(var initialpose_topic)"/>
+        <remap from="aligned_points" to="$(var aligned_points_topic)"/>
+        <remap from="odom" to="$(var odom_topic)"/>
+        
+        <extra_arg name="use_intra_process_comms" value="$(var use_intra_process_comms)"/>
+      </composable_node>
+    </load_composable_node>
+  </group>
+
+</launch>
