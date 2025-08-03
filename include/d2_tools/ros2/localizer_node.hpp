@@ -108,7 +108,7 @@ public:
             RCLCPP_INFO(this->get_logger(), "Specify initial pose is disabled, using default identity pose.");
             Eigen::Vector3d init_pos(0.0, 0.0, 0.0);
             Eigen::Quaterniond init_rot(1.0, 0.0, 0.0, 0.0);
-            Eigen::Vector3d init_gravity(0.0, 0.0, -9.81); // Assuming gravity is downwards
+            Eigen::Vector3d init_gravity(0.0, 0.0, -9.81f); // Assuming gravity is downwards
             pose_estimator_.reset(new PoseEstimator(
                 registration_,
                 init_pos,
@@ -298,7 +298,7 @@ private:
         return init_cov;
     }
 
-    std::shared_ptr<pcl::Registration<PointT, PointT>> createRegistration() const {
+    pcl::Registration<PointT, PointT>::Ptr createRegistration() {
         // std::shared_ptr<pclomp::NormalDistributionsTransform<PointT, PointT>> ndt_omp(new pclomp::NormalDistributionsTransform<PointT, PointT>());
         // ndt_omp->setTransformationEpsilon(0.01);
         // ndt_omp->setResolution(ndt_resolution_);
@@ -350,7 +350,7 @@ private:
     std::string globalmap_pcd_path_;
     pcl::PointCloud<PointT>::Ptr globalmap_;
     pcl::VoxelGrid<PointT>::Ptr downsampler_;
-    std::shared_ptr<pcl::Registration<PointT, PointT>> registration_;
+    pcl::Registration<PointT, PointT>::Ptr registration_;
     double downsample_leaf_size_;
 
     // pose estimator

@@ -31,7 +31,7 @@ public:
     // };
 
     explicit PoseEstimator(
-        std::shared_ptr<pcl::Registration<PointT, PointT>> reg,
+        pcl::Registration<PointT, PointT>::Ptr reg,
         const Eigen::Vector3d& init_pos,
         const Eigen::Quaterniond& init_rot,
         const Eigen::Vector3d& init_gravity,
@@ -144,7 +144,7 @@ private:
     rclcpp::Time init_stamp_, prev_stamp_, last_correct_stamp_;
     double cool_dt_;
 
-    std::shared_ptr<pcl::Registration<PointT, PointT>> reg_;
+    pcl::Registration<PointT, PointT>::Ptr reg_;
 
     std::unique_ptr<model::EKFPoseSystemModel> model_;
     std::unique_ptr<filter::ExtendedKalmanFilter<model::EKFPoseSystemModel>> filter_;
