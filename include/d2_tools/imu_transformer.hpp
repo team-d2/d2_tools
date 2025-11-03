@@ -1,6 +1,5 @@
 #pragma once
 
-#include "d2_tools/math.hpp"
 #include "d2_tools/types.hpp"
 
 namespace d2_tools {
